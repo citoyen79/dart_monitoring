@@ -14,6 +14,7 @@ async function sendTelegramMessage(text: string): Promise<boolean> {
     try {
         const res = await fetch(url, {
             method: 'POST',
+            cache: 'no-store',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: TELEGRAM_CHAT_ID,
@@ -44,7 +45,9 @@ export async function GET(request: Request) {
     if (!supabaseUrl || !supabaseKey) {
         return NextResponse.json({ error: "Supabase URL or Key is missing." }, { status: 500 });
     }
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+        global: { fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }) }
+    });
 
     try {
         const { data: companies, error: cmpError } = await supabase.from('companies').select('corp_code, corp_name');
@@ -68,7 +71,7 @@ export async function GET(request: Request) {
 
         do {
             const dartUrl = `https://opendart.fss.or.kr/api/list.json?crtfc_key=${DART_API_KEY}&bgn_de=${bgnde}&end_de=${bgnde}&page_no=${pageNo}&page_count=100`;
-            const res = await fetch(dartUrl);
+            const res = await fetch(dartUrl, { cache: 'no-store' });
             const dartData = await res.json();
 
             if (dartData.status !== "000" && dartData.status !== "013") {
@@ -117,7 +120,7 @@ export async function GET(request: Request) {
             }
 
             pageNo++;
-        } while (pageNo <= totalPage && pageNo < 10); // Safeguard against infinite loops
+        } while (pageNo <= totalPage && pageNo < 20); // Increased limit to 20 pages
 
         return NextResponse.json({ message: `Cron run successful. ${newAlertsCount} new alerts sent.` });
 
