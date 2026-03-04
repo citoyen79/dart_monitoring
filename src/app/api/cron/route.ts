@@ -8,7 +8,8 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID?.trim();
 
 // Helper to send telegram message
-async function sendTelegramMessage(text: string) {
+async function sendTelegramMessage(text: string): Promise<boolean> {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return false;
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     try {
         const res = await fetch(url, {
@@ -21,9 +22,14 @@ async function sendTelegramMessage(text: string) {
             })
         });
         const d = await res.json();
-        if (!d.ok) console.error("Telegram send failed:", d);
+        if (!d.ok) {
+            console.error("Telegram send failed:", d);
+            return false;
+        }
+        return true;
     } catch (error) {
         console.error("Telegram send error:", error);
+        return false;
     }
 }
 
@@ -97,16 +103,17 @@ export async function GET(request: Request) {
                 const link = `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${rceptNo}`;
                 const message = `🚨 <b>[새로운 주요 공시 알림]</b> 🚨\n\n🏢 <b>기업:</b> ${corpName}\n📄 <b>건명:</b> ${reportNm}\n\n🔗 <a href="${link}">자세히 보기 (모바일 터치)</a>`;
 
-                await sendTelegramMessage(message);
+                const success = await sendTelegramMessage(message);
 
-                await supabase.from('announcements').insert([{
-                    rcept_no: rceptNo,
-                    corp_code: corpCode,
-                    corp_name: corpName,
-                    report_nm: reportNm
-                }]);
-
-                newAlertsCount++;
+                if (success) {
+                    await supabase.from('announcements').insert([{
+                        rcept_no: rceptNo,
+                        corp_code: corpCode,
+                        corp_name: corpName,
+                        report_nm: reportNm
+                    }]);
+                    newAlertsCount++;
+                }
             }
 
             pageNo++;
