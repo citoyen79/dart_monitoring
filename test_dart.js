@@ -1,8 +1,17 @@
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: '.env.local' });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DART_API_KEY = process.env.DART_API_KEY?.trim();
 
 async function testDart() {
+    const { data: companies } = await supabase.from('companies').select('*');
+    const corpCodes = new Set(companies.map(c => c.corp_code));
+    console.log(`Loaded ${corpCodes.size} companies from DB.`);
+
     const today = new Date();
     today.setHours(today.getHours() + 9);
     const bgnde = today.toISOString().split('T')[0].replace(/-/g, '');
@@ -20,12 +29,14 @@ async function testDart() {
             totalPage = dartData.total_page || 1;
 
             if (dartData.list) {
-                const matches = dartData.list.filter(i => i.corp_code === '00251738' || i.corp_code === '00208514');
+                const matches = dartData.list.filter(i => corpCodes.has(i.corp_code));
                 if (matches.length > 0) found.push(...matches.map(m => `${m.corp_name} - ${m.report_nm} (Page ${pageNo})`));
             }
             pageNo++;
         } while (pageNo <= totalPage);
-        console.log("Found monitored filings:", found);
+
+        console.log("Found ALL monitored filings for today:");
+        console.log(found.length > 0 ? found : "None");
     } catch (err) {
         console.error("Fetch error:", err);
     }

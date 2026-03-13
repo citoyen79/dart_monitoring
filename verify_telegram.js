@@ -17,12 +17,12 @@ async function sendTelegramMessage(text) {
         });
         const d = await res.json();
         if (!d.ok) console.error("Telegram send failed:", d);
-        else console.log("Telegram send success:", d);
+        else console.log("Telegram send success:", d.result.text);
     } catch (error) {
         console.error("Telegram send error:", error);
     }
 }
 
-const message = `🚨 <b>[새로운 주요 공시 알림]</b> 🚨\n\n🏢 <b>기업:</b> 미래에셋캐피탈\n📄 <b>건명:</b> 특수관계인에대한출자\n\n🔗 <a href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260304001341">자세히 보기 (모바일 터치)</a>`;
+const message = `✅ <b>[시스템 정기 점검 안내]</b>\n\n현재 DART 모니터링 및 알림 푸시 서버가 <b>정상적으로 가동 중</b>입니다.\n\n▪️ <b>점검일시:</b> 2026년 3월 5일 오전\n▪️ <b>금일 신규 공시:</b> 아직 등록된 모니터링 대상 공시 없음\n\n(본 메시지는 푸시 기능 정상 작동 테스트를 위해 발송되었습니다.)`;
 
 sendTelegramMessage(message);
